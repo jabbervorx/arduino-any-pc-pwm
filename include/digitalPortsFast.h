@@ -60,4 +60,18 @@ static inline void pinModeFast(byte pin, byte value) {
 	_pinModeFast(pin, value);
 }
 
+static inline uint16_t analogReadFast(byte analog_pin) {
+	ADMUX = _BV(REFS0) | analog_pin;
+	ADCSRA = _BV(ADSC) | _BV(ADEN) | _BV(ADPS2) | _BV(ADPS0);	//500 kHz
+	while (ADCSRA & _BV(ADSC))
+		;
+	uint16_t ret;
+	//	ret = (ADCH << 8) | ADCL;
+	asm volatile(
+			"lds %A0,  %1\n\t"
+			"lds %B0,  %2"
+			: "=w" (ret): "n"(&ADCL), "n"(&ADCH));
+	return ret;
+}
+
 #endif /* __DIGITAL_PORTS_FAST_H */
